@@ -97,7 +97,7 @@ var Zepto = (function() {
   if(String.prototype.trim === void 0)
     String.prototype.trim = function(){ return this.replace(/^\s+/, '').replace(/\s+$/, '') };
 
-  // document.querySelectorAll(selector)获取匹配selector的NodeList
+  // document.querySelectorAll(selector)获取匹配selector的NodeList并转化为数组
   function $$(el, selector){ return slice.call(el.querySelectorAll(selector)) }
   function classRE(name){ return new RegExp("(^|\\s)"+name+"(\\s|$)") }
 
@@ -116,6 +116,8 @@ var Zepto = (function() {
   
   // 继承属性
   $.extend = function(target, src){ for(k in src) target[k] = src[k] }
+  
+  // 返回一个驼峰格式的字符串
   camelize = function(str){ return str.replace(/-+(.)?/g, function(match, chr){ return chr ? chr.toUpperCase() : '' }) }
 
   $.fn = {
@@ -149,6 +151,8 @@ var Zepto = (function() {
       while(el && nodes.indexOf(el)<0) el = el.parentNode;
       return $(el && !(el===d) ? el : []);
     },
+
+    // 返回每个元素的属性数组
     pluck: function(property){ return this.dom.map(function(el){ return el[property] }) },
     show: function(){ return this.css('display', 'block') },
     hide: function(){ return this.css('display', 'none') },
@@ -164,24 +168,40 @@ var Zepto = (function() {
           else el.setAttribute(name,value);
         });
     },
+
+    // 返回一个有宽度高度，文档位置属性的对象
     offset: function(){
       var obj = this.dom[0].getBoundingClientRect();
       return { left: obj.left+d.body.scrollLeft, top: obj.top+d.body.scrollTop, width: obj.width, height: obj.height };
     },
+
+    // css('css property', 'value'): set a CSS property
+    // css({ property1: value1, property2: value2 }): set multiple CSS properties
+    // css('css property'): get this CSS property of the first element
     css: function(prop, value){
+      // 如果仅有一个css属性，返回第一个元素的css属性
       if(value === void 0 && typeof prop == 'string') return this.dom[0].style[camelize(prop)];
+      // 如果prop是属性值对象的话，遍历对象拼接在css字符串中
       css=""; for(k in prop) css += k+':'+prop[k]+';';
+      // 如果prop是字符串，css字符串为键值拼接
       if(typeof prop == 'string') css = prop+":"+value;
+      // 对所有的elements添加该属性
       return this(function(el) { el.style.cssText += ';' + css });
     },
+
+    // 返回一个角标，如果没有返回-1
     index: function(el){
       return this.dom.indexOf($(el).get(0));
     },
+
+    // 对一个函数可以绑定多个事件
     bind: function(event, callback){
       return this(function(el){
         event.split(/\s/).forEach(function(event){ el.addEventListener(event, callback, false); });
       });
     },
+
+    // 给元素注册监听事件
     delegate: function(selector, event, callback){
       return this(function(el){
         el.addEventListener(event, function(event){
@@ -197,12 +217,20 @@ var Zepto = (function() {
     hasClass: function(name){
       return classRE(name).test(this.dom[0].className);
     },
+
+    // 添加className
     addClass: function(name){
       return this(function(el){ !$(el).hasClass(name) && (el.className += (el.className ? ' ' : '') + name) });
     },
+
+    // 移除className
     removeClass: function(name){
       return this(function(el){ el.className = el.className.replace(classRE(name), ' ').trim() });
     },
+    // 自定义DOM事件
+    // createEvent('CustomEvent') 返回的对象有一个名为 initCustomEvent()的方法
+    // initCustomEvent(type, bubles, cancelable, detail)
+    // detail 参数为事件对象的一些信息
     trigger: function(event){
       return this(function(el){ var e; el.dispatchEvent(e = d.createEvent('Events'), e.initEvent(event, true, false)) });
     }
@@ -221,5 +249,21 @@ var Zepto = (function() {
 })();
 
 '$' in window||(window.$=Zepto);
+
+```
+
+
+```js
+// fx.js
+
+
+(function($){
+  $.fn.anim = function(props, dur, ease){
+    var transforms = [], opacity, k;
+    for (k in props) k === 'opacity' ? opacity=props[k] : transforms.push(k+'('+props[k]+')');
+    return this.css({ '-webkit-transition': 'all '+(dur||0.5)+'s '+(ease||''),
+      '-webkit-transform': transforms.join(' '), opacity: opacity });
+  }
+})(Zepto);
 
 ```
