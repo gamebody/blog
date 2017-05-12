@@ -255,7 +255,7 @@ var Zepto = (function() {
 
 ```js
 // fx.js
-
+// 设置动画属性
 
 (function($){
   $.fn.anim = function(props, dur, ease){
